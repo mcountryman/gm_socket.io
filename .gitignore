@@ -1,0 +1,12 @@
+# config
+.vscode/
+
+# output
+bin/
+project/
+
+# node_modules
+test/echo-server/node_modules/
+
+# logs
+*.log

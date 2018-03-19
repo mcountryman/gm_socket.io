@@ -1,0 +1,6 @@
+[submodule "lib/socket.io"]
+	path = lib/socket.io
+	url = https://github.com/socketio/socket.io-client-cpp.git
+[submodule "lib/LuaInterface"]
+	path = lib/LuaInterface
+	url = https://github.com/glua/LuaInterface.git
