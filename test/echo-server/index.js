@@ -1,11 +1,16 @@
 var io = require('socket.io').listen(8080);
 
 io.sockets.on('connection', function (socket) {
-  console.log("Someone just connected!");
+  console.log(`Connection from ${socket.conn.remoteAddress}`);
 
-  // Echo back messages from the client
-  socket.on('message', function (message) {
-    console.log("Got message: " + message);
-    socket.emit('message', message);
+  socket.on('message', function (data) {
+    console.log(`Client ${socket.conn.remoteAddress} emitted: `);
+    console.log(JSON.stringify(data));
+
+    socket.emit('message', data)
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`Client ${socket.conn.remoteAddress} disconnected with reason ${reason}`);
   });
 });

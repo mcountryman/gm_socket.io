@@ -5,10 +5,10 @@
 
 #include <sio_socket.h>
 
-#define SOCKET_TYPE 223
+#define kSOCKET_TYPE 223
 
 namespace gm_socket_io {
-  namespace SocketWrapper {
+  namespace socket_wrapper {
     int __gc(lua_State *state);
     int __index(lua_State *state);
 

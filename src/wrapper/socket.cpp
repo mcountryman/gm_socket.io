@@ -8,7 +8,7 @@
 #include <Windows.h>
 
 namespace gm_socket_io {
-  namespace SocketWrapper {
+  namespace socket_wrapper {
     int make(lua_State *state, sio::socket::ptr socket) {
       LUA->CreateTable();
         LUA->PushCFunction(on);
@@ -23,7 +23,7 @@ namespace gm_socket_io {
 
       GarrysMod::Lua::UserData *ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
       ud->data = socket.get();
-      ud->type = SOCKET_TYPE;
+      ud->type = kSOCKET_TYPE;
       LUA->CreateTable();
 
       LUA->ReferencePush(socket_ref);
@@ -39,7 +39,7 @@ namespace gm_socket_io {
     }
 
     int on(lua_State *state) {
-      LUA->CheckType(1, SOCKET_TYPE);
+      LUA->CheckType(1, kSOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
       LUA->CheckType(3, GarrysMod::Lua::Type::FUNCTION);
 
@@ -53,7 +53,7 @@ namespace gm_socket_io {
         socket->on_error([engine, cb_ref](sio::message::ptr message) {
           engine->emit(cb_ref, [message](lua_State *state, int cb_ref) {
             LUA->ReferencePush(cb_ref);
-            Message::push_message(state, message);
+            message::push_message(state, message);
             LUA->Call(1, 0);
           });
         });
@@ -61,9 +61,9 @@ namespace gm_socket_io {
         socket->on(name, [engine, cb_ref](const std::string &name, sio::message::ptr const &message, bool need_ack, sio::message::list &ack_message) {
           engine->emit(cb_ref, [message, need_ack, ack_message](lua_State *state, int cb_ref) {
             LUA->ReferencePush(cb_ref);
-            Message::push_message(state, message);
+            message::push_message(state, message);
             LUA->PushBool(need_ack);
-            Message::push_message(state, ack_message.to_array_message());
+            message::push_message(state, ack_message.to_array_message());
             LUA->Call(3, 0);
           });
         });
@@ -72,7 +72,7 @@ namespace gm_socket_io {
       return 0;
     }
     int off(lua_State *state) {
-      LUA->CheckType(1, SOCKET_TYPE);
+      LUA->CheckType(1, kSOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -87,7 +87,7 @@ namespace gm_socket_io {
       return 0;
     }
     int emit(lua_State *state) {
-      LUA->CheckType(1, SOCKET_TYPE);
+      LUA->CheckType(1, kSOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -95,16 +95,10 @@ namespace gm_socket_io {
       std::function<void(const sio::message::list&)> ack = nullptr;
 
       sio::message::list messages;
+      messages.push(message::get_message(state, 3));
 
-      int arg_start = 3;
-      int arg_end = arg_start + LUA->Top();
-      
-      for (int i = arg_start; i < arg_end; i++) {
-        messages.push(Message::get_message_from_args(state, i));
-      }
-
-      if (LUA->IsType(arg_end + 1, GarrysMod::Lua::Type::FUNCTION)) {
-        auto cb = LUA->GetCFunction(arg_end + 1);
+      if (LUA->IsType(4, GarrysMod::Lua::Type::FUNCTION)) {
+        auto cb = LUA->GetCFunction(4);
         auto cb_ref = LUA->ReferenceCreate();
         auto engine = Engine::from_state(state);
 
@@ -113,7 +107,7 @@ namespace gm_socket_io {
 
           engine->emit(cb_ref, [array_message](lua_State *state, int cb_ref) {
             LUA->ReferencePush(cb_ref);
-            Message::push_message(state, array_message);
+            message::push_message(state, array_message);
             LUA->Call(1, 0);
           });
         };

@@ -4,10 +4,10 @@
 #include <sio_socket.h>
 #include <GarrysMod/Lua/Interface.h>
 
-#define CLIENT_TYPE 222
+#define kCLIENT_TYPE 222
 
 namespace gm_socket_io {
-  namespace ClientWrapper {
+  namespace client_wrapper {
     int __gc(lua_State *state);
     int __index(lua_State *state);
 

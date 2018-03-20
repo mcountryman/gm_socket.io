@@ -32,13 +32,9 @@ namespace gm_socket_io {
       auto engine = std::make_shared<Engine>();
 
       LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
-        LUA->CreateTable();
-          LUA->PushCFunction(ClientWrapper::make);
+        client_wrapper::make(state);
+          LUA->PushCFunction(client_wrapper::make);
           LUA->SetField(-2, "Client");
-        LUA->CreateTable();
-          ClientWrapper::make(state);
-          LUA->SetField(-2, "__index");
-        LUA->SetMetaTable(-2);
         LUA->SetField(-2, "io");
 
         LUA->GetField(-1, "hook");
@@ -54,6 +50,12 @@ namespace gm_socket_io {
       return 0;
     }
     int Engine::on_close(lua_State *state) {
+      auto engine = Engine::from_state(state);
+      std::tuple<int, std::function<void(lua_State*, int)>> callback;
+
+      while (engine->dequeue(&callback))
+        LUA->ReferenceFree(std::get<0>(callback));
+
       return 0;
     }
     int Engine::on_think(lua_State *state) {
@@ -76,12 +78,6 @@ namespace gm_socket_io {
       return 0;
     }
     int Engine::on_shutdown(lua_State *state) {
-      auto engine = Engine::from_state(state);
-      std::tuple<int, std::function<void(lua_State*, int)>> callback;
-      
-      while (engine->dequeue(&callback))
-        LUA->ReferenceFree(std::get<0>(callback));
-
       return 0;
     }
 }

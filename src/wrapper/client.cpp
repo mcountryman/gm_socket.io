@@ -8,7 +8,7 @@
 #include <sio_socket.h>
 
 namespace gm_socket_io {
-  namespace ClientWrapper {
+  namespace client_wrapper {
     int __gc(lua_State *state) {
       //LUA->CheckType(1, CLIENT_TYPE);
       auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -22,7 +22,7 @@ namespace gm_socket_io {
       return 0;
     }
     int __index(lua_State *state) {
-      LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kCLIENT_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       auto client = (sio::client*)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -44,7 +44,7 @@ namespace gm_socket_io {
       return 1;
     }
     int __newindex(lua_State *state) {
-      LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kCLIENT_TYPE);
 
       if (LUA->IsType(2, GarrysMod::Lua::Type::STRING)) {
         auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -106,7 +106,7 @@ namespace gm_socket_io {
 
       GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
         ud->data = client;
-        ud->type = CLIENT_TYPE;
+        ud->type = kCLIENT_TYPE;
       LUA->CreateTable();
         LUA->PushCFunction(__gc);
         LUA->SetField(-2, "__gc");
@@ -124,7 +124,7 @@ namespace gm_socket_io {
     }
 
     int on(lua_State *state) {
-      LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kCLIENT_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
       LUA->CheckType(3, GarrysMod::Lua::Type::FUNCTION);
 
@@ -175,7 +175,7 @@ namespace gm_socket_io {
       return 0;
     }
     int socket(lua_State *state) {
-      LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kCLIENT_TYPE);
 
       auto client = (sio::client*)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
       auto nsp = std::string("");
@@ -184,11 +184,11 @@ namespace gm_socket_io {
         nsp = std::string(LUA->GetString(2));
       }
 
-      SocketWrapper::make(state, client->socket(nsp));
+      socket_wrapper::make(state, client->socket(nsp));
       return 1;
     }
     int connect(lua_State *state) { 
-      LUA->CheckType(1, CLIENT_TYPE);  
+      LUA->CheckType(1, kCLIENT_TYPE);  
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       std::map<std::string, std::string> query;
@@ -210,7 +210,7 @@ namespace gm_socket_io {
       return 0;
     }
     int disconnect(lua_State *state) { 
-      LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kCLIENT_TYPE);
 
       auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
       
