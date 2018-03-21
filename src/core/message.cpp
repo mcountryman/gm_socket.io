@@ -50,6 +50,8 @@ namespace gm_socket_io {
     }
 
     bool is_array(lua_State *state, int position) {
+      int max = 0;
+
       // Push table copy
       LUA->Push(position);
       // TODO: figure out why I need this
@@ -60,16 +62,17 @@ namespace gm_socket_io {
 
         // Check key type
         if (LUA->IsType(-2, GarrysMod::Lua::Type::NUMBER)) {
-          double key = LUA->CheckNumber(-2);
+          double key = LUA->GetNumber(-2);
 
           // Check if is integer
-          if (floor(key) == key && key >= 1) {
+          if (floor(key) == key && key >= 1 && max < key) {
+            max = key;
             is_array = true;
           }
         }
 
         // Pop value + key copy
-        LUA->Pop(2);
+        LUA->Pop(1);
 
         if (!is_array) {
           // Pop table copy and exit
@@ -81,13 +84,13 @@ namespace gm_socket_io {
       // Pop table copy
       LUA->Pop(1);
  
-      return true;
+      return max >= kGM_SOCKET_MIN_ARRAY_SIZE;
     }
 
     sio::message::ptr get_message_from_table(lua_State *state, int position, int depth) {
       auto message = sio::object_message::create();
 
-      if (depth >= kMAX_TABLE_DEPTH) {
+      if (depth > kGM_SOCKET_MAX_TABLE_DEPTH) {
         return sio::null_message::create();
       }
 
@@ -95,12 +98,14 @@ namespace gm_socket_io {
       LUA->PushNil();
 
       while (LUA->Next(-2) != 0) {
-        auto key = LUA->CheckString(-2);
-        auto value = get_message(state, -1, depth + 1);
+        LUA->Push(-2);
+
+        auto key = LUA->CheckString(-1);
+        auto value = get_message(state, -2, depth + 1);
 
         ((sio::object_message*)message.get())->insert(key, value);
 
-        LUA->Pop(1);
+        LUA->Pop(2);
       }
 
       LUA->Pop(1);
@@ -111,7 +116,7 @@ namespace gm_socket_io {
     sio::message::ptr get_message_from_array(lua_State *state, int position, int depth) {
       auto message = sio::array_message::create();
 
-      if (depth >= kMAX_ARRAY_DEPTH) {
+      if (depth > kGM_SOCKET_MAX_ARRAY_DEPTH) {
         return sio::null_message::create();
       }
 
@@ -121,7 +126,7 @@ namespace gm_socket_io {
       while (LUA->Next(-2) != 0) {
         ((sio::array_message*)message.get())->push(get_message(state, -1, depth + 1));
 
-        LUA->Pop(2);
+        LUA->Pop(1);
       }
 
       LUA->Pop(1);

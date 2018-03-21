@@ -12,44 +12,38 @@
 namespace gm_socket_io {
   class Engine {
   private:
-    std::mutex m_mutex;
-    std::condition_variable m_condition;
-    std::queue<std::tuple<int, std::function<void(lua_State*, int)>>> m_callback_queue;
+    std::mutex mutex_;
+    std::condition_variable condition_;
+
+    // Contains queue of callback wrappers and CFunc references
+    std::queue<std::tuple<int, std::function<void(lua_State*, int)>>> callback_queue_;
+
   public:
-    Engine() {}
-    ~Engine() {}
-  public:
-    void emit(int cb_ref, std::function<void(lua_State*, int)> cb);
-    bool dequeue(std::tuple<int, std::function<void(lua_State*, int)>>* callback);
+
+    // Pushes CFunc reference and C++ wrapper fn to stack to be called on main thread
+    void emit(int cfunc_reference, std::function<void(lua_State*, int)> callback_wrapper);
+
+    // Dequeues CFunc reference / C++ wrapper fn in a thread safe manner
+    bool dequeue(std::tuple<int, std::function<void(lua_State*, int)>>* callback_tuple);
+
   private:
-    static std::map<lua_State*, std::shared_ptr<Engine>> m_state_map;
+    static std::map<lua_State*, std::shared_ptr<Engine>> state_map_;
   public:
     static std::shared_ptr<Engine> from_state(lua_State *state) {
-      return m_state_map[state];
+      return state_map_[state];
     }
 
-  public: // Lua functions
+  public:
+
+    // Called when library opens (internal use only)
     static int on_open(lua_State *state);
+
+    // Called when library closed (internal use only)
     static int on_close(lua_State *state);
-  public: // Lua hook callbacks
+
+    // Called on Think hook (internal use only)
     static int on_think(lua_State *state);
-    static int on_shutdown(lua_State *state);
   };
 }
 
 #endif//_GM_SOCKET_IO_CORE_ENGINE_HPP_
-
-/*
-int on(lua_State *state) {
-  auto client = Client::from_state(state);
-  auto engine = Engine::from_state(state);
-
-  CLuaFunc *cb = LUA->GetCFunction(1);
-
-  client.on("connect", [client, engine](sio::socket *socket) {
-    engine.emit([socket](lua_State *state, CLuaFunc *cb) {
-
-    }, cb);
-  });
-}
-*/

@@ -1,10 +1,5 @@
-local Config = {
-  Debug = true,
-  GarrysMod = "Q:/Games/Steam Games/steamapps/common/GarrysMod"
-}
 local Boost = require "boost"
 
--- Fix for VS2017
 -- https://github.com/premake/premake-core/issues/935#issuecomment-343491487
 function os.winSdkVersion()
   local reg_arch = iif(os.is64bit(), "\\Wow6432Node\\", "\\")
@@ -24,6 +19,27 @@ solution "gm_socket.io"
   configuration "Release"
     optimize "On"
 
+  -- https://github.com/zaphoyd/websocketpp/blob/ac5d7ea5af9734de965688b54a7860259887b537/CMakeLists.txt#L101
+  filter { "system:windows", "action:vs*" }
+    defines {
+      "UNICODE",
+      "_UNICODE",
+      "_WINSOCK_DEPRECATED_NO_WARNINGS",
+      "_CRT_SECURE_NO_WARNINGS",
+      "_SCL_SECURE_NO_WARNINGS",
+      "NOMINMAX"
+    }
+    runtime "Release"
+    systemversion(os.winSdkVersion() .. ".0")
+  filter { "system:linux" }
+    defines {
+      "NDEBUG"
+    }
+  filter { "system:macosx" }
+    defines {
+      "NDEBUG"
+    }
+
   project "gm_socket.io"
     characterset "MBCS"
     include "lib/LuaInterface"
@@ -41,23 +57,12 @@ solution "gm_socket.io"
     }
     defines {
       "GMMODULE",
-      "_WEBSOCKETPP_CPP11_STL_"
+      "_WEBSOCKETPP_CPP11_STL_",
+      "_WEBSOCKETPP_CPP11_FUNCTIONAL_",
+      "_WEBSOCKETPP_CPP11_SYSTEM_ERROR_",
+      "_WEBSOCKETPP_CPP11_RANDOM_DEVICE_",
+      "_WEBSOCKETPP_CPP11_MEMORY_"
     }
-
-    filter {"system:windows", "action:vs*"}
-      defines {
-        "UNICODE",
-        "_UNICODE",
-        "_CRT_SECURE_NO_WARNINGS",
-        "_SCL_SECURE_NO_WARNINGS",
-        "NOMINMAX",
-        "_WEBSOCKETPP_CPP11_FUNCTIONAL_",
-        "_WEBSOCKETPP_CPP11_SYSTEM_ERROR_",
-        "_WEBSOCKETPP_CPP11_RANDOM_DEVICE_",
-        "_WEBSOCKETPP_CPP11_MEMORY_"
-      }
-      runtime "Release"
-      systemversion(os.winSdkVersion() .. ".0")
 
     Boost.link "system"
     Boost.link "date_time"
@@ -69,16 +74,5 @@ solution "gm_socket.io"
       "lib/socket.io/lib/rapidjson/include",
       "lib/socket.io/lib/websocketpp"
     }
-
-    if Config.Debug then
-      postbuildcommands {
-        '{RMDIR} "'..Config.GarrysMod..'/garrysmod/lua/bin"',
-        '{MKDIR} "'..Config.GarrysMod..'/garrysmod/lua/bin"',
-        '{COPY} "%{cfg.buildtarget.abspath}" ' ..
-          '"'..Config.GarrysMod..'/garrysmod/lua/bin"',
-        '{MOVE} "'..Config.GarrysMod..'/garrysmod/lua/bin/%{cfg.buildtarget.name}" ' ..
-          '"'..Config.GarrysMod..'/garrysmod/lua/bin/gmcl_socket.io%{cfg.buildtarget.suffix}.dll"',
-      }
-    end
 
     kind "SharedLib"

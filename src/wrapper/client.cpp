@@ -10,7 +10,7 @@
 namespace gm_socket_io {
   namespace client_wrapper {
     int __gc(lua_State *state) {
-      //LUA->CheckType(1, CLIENT_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
       auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
 
       if (client->opened()) {
@@ -18,68 +18,6 @@ namespace gm_socket_io {
       }
 
       delete client;
-
-      return 0;
-    }
-    int __index(lua_State *state) {
-      LUA->CheckType(1, kCLIENT_TYPE);
-      LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
-
-      auto client = (sio::client*)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
-      auto key = std::string(LUA->GetString(2));
-
-      LUA->PushString(key.c_str());
-      LUA->RawGet(1);
-
-      if (LUA->IsType(-1, GarrysMod::Lua::Type::NIL)) {
-        LUA->Pop();
-
-        if (key == "is_open") {
-          LUA->PushBool(client->opened());
-
-          return 1;
-        }
-      }
-
-      return 1;
-    }
-    int __newindex(lua_State *state) {
-      LUA->CheckType(1, kCLIENT_TYPE);
-
-      if (LUA->IsType(2, GarrysMod::Lua::Type::STRING)) {
-        auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
-        auto key = std::string(LUA->GetString(2));
-
-        if (key == "reconnect_delay") {
-          // LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
-          // unsigned int millis = reinterpret_cast<unsigned int>(LUA->GetNumber(3));
-
-          // client->set_reconnect_delay(millis);
-
-          return 0;
-        } else if (key == "reconnect_delay_max") {
-          // LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
-          // unsigned int millis = reinterpret_cast<unsigned int>(LUA->GetNumber(3));
-
-          // client->set_reconnect_delay_max(millis);
-
-          return 0;
-        } else if (key == "reconnect_attempts") {
-          // LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
-          // int attempts = reinterpret_cast<int>(LUA->GetNumber(3));
-
-          // client->set_reconnect_delay(attempts);
-
-          return 0;
-        }
-      }
-
-      void *key = LUA->GetUserdata(2);
-      void *value = LUA->GetUserdata(3);
-
-      LUA->PushUserdata(key);
-      LUA->PushUserdata(value);
-      LUA->RawSet(1);
 
       return 0;
     }
@@ -98,6 +36,19 @@ namespace gm_socket_io {
         LUA->PushCFunction(disconnect);
         LUA->SetField(-2, "disconnect");
 
+        LUA->PushCFunction(is_connected);
+        LUA->SetField(-2, "is_connected");
+
+        LUA->PushCFunction(set_reconnect_delay);
+        LUA->SetField(-2, "reconnect_delay");
+
+        LUA->PushCFunction(set_reconnect_delay_max);
+        LUA->SetField(-2, "set_reconnect_delay_max");
+
+        LUA->PushCFunction(set_reconnect_attempts);
+        LUA->SetField(-2, "set_reconnect_attempts");
+
+
         LUA->CreateTable();
         LUA->SetField(-2, "__sockets");
 
@@ -106,7 +57,7 @@ namespace gm_socket_io {
 
       GarrysMod::Lua::UserData* ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
         ud->data = client;
-        ud->type = kCLIENT_TYPE;
+        ud->type = kGM_SOCKET_CLIENT_TYPE;
       LUA->CreateTable();
         LUA->PushCFunction(__gc);
         LUA->SetField(-2, "__gc");
@@ -124,7 +75,7 @@ namespace gm_socket_io {
     }
 
     int on(lua_State *state) {
-      LUA->CheckType(1, kCLIENT_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
       LUA->CheckType(3, GarrysMod::Lua::Type::FUNCTION);
 
@@ -174,8 +125,9 @@ namespace gm_socket_io {
 
       return 0;
     }
+
     int socket(lua_State *state) {
-      LUA->CheckType(1, kCLIENT_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
 
       auto client = (sio::client*)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
       auto nsp = std::string("");
@@ -187,8 +139,9 @@ namespace gm_socket_io {
       socket_wrapper::make(state, client->socket(nsp));
       return 1;
     }
+
     int connect(lua_State *state) { 
-      LUA->CheckType(1, kCLIENT_TYPE);  
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);  
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       std::map<std::string, std::string> query;
@@ -209,12 +162,51 @@ namespace gm_socket_io {
 
       return 0;
     }
-    int disconnect(lua_State *state) { 
-      LUA->CheckType(1, kCLIENT_TYPE);
 
+    int disconnect(lua_State *state) { 
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
       auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
       
       client->close();
+
+      return 0;
+    }
+
+    int is_connected(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
+      auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+
+      LUA->PushBool(client->opened());
+
+      return 1;
+    }
+    int set_reconnect_delay(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
+   
+      auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+      auto delay = static_cast<unsigned int>(LUA->CheckNumber(2));
+
+      client->set_reconnect_delay(delay);
+
+      return 0;
+    }
+    int set_reconnect_delay_max(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
+
+      auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+      auto delay_max = static_cast<unsigned int>(LUA->CheckNumber(2));
+
+      client->set_reconnect_delay_max(delay_max);
+
+      return 0;
+    }
+    int set_reconnect_attempts(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_CLIENT_TYPE);
+
+      auto client = (sio::client *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+      auto attempts = static_cast<int>(LUA->CheckNumber(2));
+
+      client->set_reconnect_attempts(attempts);
 
       return 0;
     }

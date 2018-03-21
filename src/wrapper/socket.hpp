@@ -1,22 +1,23 @@
 #ifndef _GM_SOCKET_IO_WRAPPER_SOCKET_HPP_
 #define _GM_SOCKET_IO_WRAPPER_SOCKET_HPP_
 
-#include <GarrysMod/Lua/Interface.h>
-
+#include "../config.hpp"
 #include <sio_socket.h>
-
-#define kSOCKET_TYPE 223
+#include <GarrysMod/Lua/Interface.h>
 
 namespace gm_socket_io {
   namespace socket_wrapper {
-    int __gc(lua_State *state);
-    int __index(lua_State *state);
-
+    // Push new io.Socket object
     int make(lua_State *state, sio::socket::ptr socket);
 
     int on(lua_State *state);
+
     int off(lua_State *state);
+    int off_all(lua_State *state);
+
     int emit(lua_State *state);
+
+    int get_namespace(lua_State *state);
   }
 }
 

@@ -17,13 +17,19 @@ namespace gm_socket_io {
         LUA->PushCFunction(off);
         LUA->SetField(-2, "off");
 
+        LUA->PushCFunction(off_all);
+        LUA->SetField(-2, "off_all");
+
         LUA->PushCFunction(emit);
         LUA->SetField(-2, "emit");
+
+        LUA->PushCFunction(get_namespace);
+        LUA->SetField(-2, "get_namespace");
       int socket_ref = LUA->ReferenceCreate();
 
       GarrysMod::Lua::UserData *ud = (GarrysMod::Lua::UserData*)LUA->NewUserdata(sizeof(GarrysMod::Lua::UserData));
       ud->data = socket.get();
-      ud->type = kSOCKET_TYPE;
+      ud->type = kGM_SOCKET_SOCKET_TYPE;
       LUA->CreateTable();
 
       LUA->ReferencePush(socket_ref);
@@ -39,7 +45,7 @@ namespace gm_socket_io {
     }
 
     int on(lua_State *state) {
-      LUA->CheckType(1, kSOCKET_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_SOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
       LUA->CheckType(3, GarrysMod::Lua::Type::FUNCTION);
 
@@ -71,8 +77,9 @@ namespace gm_socket_io {
 
       return 0;
     }
+
     int off(lua_State *state) {
-      LUA->CheckType(1, kSOCKET_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_SOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -86,8 +93,18 @@ namespace gm_socket_io {
 
       return 0;
     }
+
+    int off_all(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_SOCKET_TYPE);
+      auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+
+      socket->off_all();
+
+      return 0;
+    }
+
     int emit(lua_State *state) {
-      LUA->CheckType(1, kSOCKET_TYPE);
+      LUA->CheckType(1, kGM_SOCKET_SOCKET_TYPE);
       LUA->CheckType(2, GarrysMod::Lua::Type::STRING);
 
       auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
@@ -95,7 +112,10 @@ namespace gm_socket_io {
       std::function<void(const sio::message::list&)> ack = nullptr;
 
       sio::message::list messages;
-      messages.push(message::get_message(state, 3));
+
+      LUA->Push(3);
+      messages.push(message::get_message(state, -1));
+      LUA->Pop();
 
       if (LUA->IsType(4, GarrysMod::Lua::Type::FUNCTION)) {
         auto cb = LUA->GetCFunction(4);
@@ -116,6 +136,15 @@ namespace gm_socket_io {
       socket->emit(name, messages, ack);
 
       return 0;
+    }
+
+    int get_namespace(lua_State *state) {
+      LUA->CheckType(1, kGM_SOCKET_SOCKET_TYPE);
+      auto socket = (sio::socket *)((GarrysMod::Lua::UserData *)LUA->GetUserdata(1))->data;
+
+      LUA->PushString(socket->get_namespace().c_str());
+
+      return 1;
     }
   }
 }
