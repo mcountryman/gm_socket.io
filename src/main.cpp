@@ -1,8 +1,11 @@
-#include "core/engine.hpp"
+#include "engine.hpp"
+#include <GarrysMod/Lua/Interface.h>
 
 GMOD_MODULE_OPEN() {
-  return gm_socket_io::Engine::on_open(state);
+  gm_socket_io::Engine::FromState(state)->Open(state);
+
+  return 0;
 }
 GMOD_MODULE_CLOSE() {
-  return gm_socket_io::Engine::on_close(state);
+  return 0;
 }

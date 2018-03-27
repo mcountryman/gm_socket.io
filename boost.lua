@@ -1,6 +1,13 @@
 local Boost = {
   macos = {},
-  linux = {},
+  linux = {
+    lib_dir        = "/usr/lib/x86_64-gnu/",
+    lib_prefix     = "libboost_",
+    lib_suffix     = "",
+    include_dir    = "/usr/include/boost",
+
+    links = {}
+  },
   windows = {
     lib_dir        = "Q:/Development/deps/boost_1_55_0/lib",
     lib_prefix     = "libboost_",

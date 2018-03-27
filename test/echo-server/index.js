@@ -10,6 +10,11 @@ io.sockets.on('connection', function (socket) {
     socket.emit('message', data)
   });
 
+  socket.emit('message', 255)
+  socket.emit('message', 255.552)
+  socket.emit('message', "string")
+  socket.emit('message', [ 1, 2, 3 ])
+
   socket.on('disconnect', (reason) => {
     console.log(`Client ${socket.conn.remoteAddress} disconnected with reason ${reason}`);
   });
